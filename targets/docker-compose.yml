@@ -1,7 +1,9 @@
 version: "3"
 
 networks:
-  targets:
+  watchdog_watchdog:
+    external: true
+
 
 services:
   mysqld:
@@ -16,12 +18,13 @@ services:
     ports:
       - "3306:3306"
     networks:
-      - targets
+      - watchdog_watchdog
 
 
   mysqld-exporter:
     image: quay.io/prometheus/mysqld-exporter
-    command:
+    command: |
+      --mysqld.address="mysqld:3306"
       --config.my-cnf="/tmp/.my.cnf"
     container_name: mysqld-exporter
     environment:
@@ -30,20 +33,9 @@ services:
       - "$PWD/mysql-exporter/my.cnf:/tmp/.my.cnf"
     ports:
       - 9104:9104
-    links:
-      - mysqld
+    networks:
+      - watchdog_watchdog
     depends_on:
       - mysqld
 
-
-# mysqlexporter:
-#    image: prom/mysqld-exporter:v0.15.0
-#    volumes:
-#      - "$PWD/mysql-exporter/my.cnf:/root/.my.cnf"
-#    command: | 
-#      --config.file=/root/.my.cnf
-#    ports:
-#      - "9104:9104"
-#    networks:
-#      - targets
-
+      
