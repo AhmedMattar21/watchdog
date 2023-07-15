@@ -1,0 +1,49 @@
+version: "3"
+
+networks:
+  targets:
+
+services:
+  mysqld:
+    image: mysql:8.0.33-debian
+    container_name: mysqld
+    environment:
+      MYSQL_ROOT_PASSWORD: 'ahmed@1998'
+      MYSQL_USER: 'mysql_user'
+      MYSQL_PASS: 'mysql_pass'
+    volumes:
+      - "$PWD/mysql_data:/var/lib/mysql"
+    ports:
+      - "3306:3306"
+    networks:
+      - targets
+
+
+  mysqld-exporter:
+    image: quay.io/prometheus/mysqld-exporter
+    command:
+      --config.my-cnf="/tmp/.my.cnf"
+    container_name: mysqld-exporter
+    environment:
+      - DATA_SOURCE_NAME=exporter:exporter@(mysqld:3306)/
+    volumes:
+      - "$PWD/mysql-exporter/my.cnf:/tmp/.my.cnf"
+    ports:
+      - 9104:9104
+    links:
+      - mysqld
+    depends_on:
+      - mysqld
+
+
+# mysqlexporter:
+#    image: prom/mysqld-exporter:v0.15.0
+#    volumes:
+#      - "$PWD/mysql-exporter/my.cnf:/root/.my.cnf"
+#    command: | 
+#      --config.file=/root/.my.cnf
+#    ports:
+#      - "9104:9104"
+#    networks:
+#      - targets
+

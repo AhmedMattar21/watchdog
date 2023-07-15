@@ -1,0 +1,105 @@
+version: "3"
+
+networks:
+  watchdog:
+
+services:
+  loki:
+    image: grafana/loki:2.8.0
+    volumes:
+      - '$PWD/loki:/etc/loki'
+    ports:
+      - "3100:3100"
+    restart: unless-stopped           # restart if the container stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - watchdog
+    
+  promtail:
+    image: grafana/promtail:2.8.0
+    volumes:
+      - /var/log:/var/log   # mount host logs to container logs
+      - '$PWD/promtail:/etc/promtail'
+    command: -config.file=/etc/promtail/config.yml 
+    restart: unless-stopped 
+    networks:
+      - watchdog
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - '$PWD/grafana:/var/lib/grafana'
+    ports:
+      - "3000:3000"   # we may need to change this port
+    networks:
+      - watchdog
+
+
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    volumes:
+      - "$PWD/alertmanager:/etc/alertmanager"
+    command: |
+      --config.file=/etc/alertmanager/alertmanager.yml
+    ports:
+      - "9093:9093"
+    networks:
+      - watchdog
+
+
+  pushgateway:
+    image: prom/pushgateway:v1.6.0
+    ports:
+      - "9091:9091"
+    networks:
+      - watchdog
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    volumes:
+      - "$PWD/prometheus:/etc/prometheus"
+    command: --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - watchdog
+
+
+
+##################################################
+################### TARGETS ######################
+##################################################
+
+  mysqld:
+      image: mysql:8.0.33-debian
+      container_name: mysqld
+      environment:
+        MYSQL_ROOT_PASSWORD: 'ahmed@1998'
+        MYSQL_USER: 'mysql_user'
+        MYSQL_PASS: 'mysql_pass'
+      volumes:
+        - "$PWD/targets/mysql_data:/var/lib/mysql"
+      ports:
+        - "3306:3306"
+      networks:
+        - watchdog
+
+
+  mysqld-exporter:
+    image: quay.io/prometheus/mysqld-exporter
+    command: |
+      --mysqld.address="mysqld:3306"
+      --config.my-cnf="/tmp/.my.cnf"
+    container_name: mysqld-exporter
+    environment:
+      - DATA_SOURCE_NAME=exporter:exporter@(mysqld:3306)/
+    volumes:
+      - "$PWD/targets/mysql-exporter/my.cnf:/tmp/.my.cnf"
+    ports:
+      - 9104:9104
+    networks:
+      - watchdog
+    depends_on:
+      - mysqld
+
+      
