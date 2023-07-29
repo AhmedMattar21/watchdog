@@ -81,21 +81,39 @@ $ docker compose up -d --force-recreate
 ```
 
 
-**3- Docker-Engine Dashboard:** Needs to configure docker deamon and install Grafana-loki Plugin.
+**3- Docker-Engine and Node Dashboard:** Needs to configure docker deamon and install Grafana-loki Plugin. [IN_PROGRESS]
 
-
-```
-
-```
-
-
-
-
-## Alerts
+> Use Labels to select the targets
 
 
 
 
 
 ## Slack Integration
+
+```
+$ nano alertmanager/alertmanager.yml
+```
+
+Replace SLACK_CHANNEL and SLACK_URL with your own.
+
+```
+receivers:
+- name: 'web.hook'
+  webhook_configs:
+  - url: 'http://127.0.0.1:5001/'
+- name: slack-notifications
+  slack_configs:
+  - channel: "#SLACK_CHANNEL"
+    send_resolved: true
+    api_url: "SLACK_URL"
+    title: "{{ .GroupLabels.alertname }}"
+    text: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}"
+
+```
+
+
+
+
+
 
