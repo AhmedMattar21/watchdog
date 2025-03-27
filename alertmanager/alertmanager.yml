@@ -17,7 +17,7 @@ receivers:
   slack_configs:
   - channel: "#prometheus"
     send_resolved: true
-    api_url: "https://hooks.slack.com/services/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"
+    api_url: "https://hooks.slack.com/services/T056CPzQF63C/B0s5GGS3KSG1/MhJOpbPpVBU1h5wc2fR77d1HG"
     title: "{{ .GroupLabels.alertname }}"
     text: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}"
 
